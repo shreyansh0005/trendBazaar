@@ -3,9 +3,17 @@ import { StarIcon } from '@heroicons/react/20/solid'
 import { Radio, RadioGroup } from '@headlessui/react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from 'react-router-dom'
-import { fetchProductByIdAsync, selectProductById } from '../ProductSlice'
+import {
+  fetchProductByIdAsync,
+  selectProductById,
+  selectProductListStatus,
+} from '../ProductSlice'
 import { selectLoggedInUser } from '../../auth/authSlice'
-import { addToCartAsync } from '../../cart/cartSlice'
+import { addToCartAsync, selectItems } from '../../cart/cartSlice'
+import { discountedPrice } from '../../../app/constants'
+import { useAlert } from 'react-alert'
+import { Grid } from 'react-loader-spinner'
+
 const colors = [
   { name: 'White', class: 'bg-white', selectedClass: 'ring-gray-400' },
   { name: 'Gray', class: 'bg-gray-200', selectedClass: 'ring-gray-400' },
@@ -36,16 +44,47 @@ export default function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState(colors[0])
   const [selectedSize, setSelectedSize] = useState(sizes[2])
   const user = useSelector(selectLoggedInUser)
+  const items = useSelector(selectItems)
   const product = useSelector(selectProductById)
   const dispatch = useDispatch()
   const params = useParams()
+  const alert = useAlert()
+  const status = useSelector(selectProductListStatus)
 
   const handleCart = (e) => {
     e.preventDefault()
-    const newItem = { ...product, quantity: 1, user: user.id }
-    delete newItem['id']
-    dispatch(addToCartAsync(newItem))
-    dispatch(addToCartAsync(newItem))
+    try {
+      console.log(product)
+      console.log(items)
+      if (items.findIndex((item) => item.product.id === product.id) < 0) {
+        console.log({ items, product })
+        const newItem = {
+          product: product.id,
+          quantity: 1,
+          user: user.id,
+        }
+
+        dispatch(addToCartAsync(newItem))
+        alert.success('Item added to Cart')
+      } else {
+        alert.error('Item Already added')
+      }
+    } catch (error) {
+      console.log(error)
+    }
+    // if (items.findIndex((item) => item.product.id === product.id) < 0) {
+    //   console.log({ items, product })
+    //   const newItem = {
+    //     product: product.id,
+    //     quantity: 1,
+    //     user: user.id,
+    //   }
+
+    //   dispatch(addToCartAsync(newItem))
+    //   alert.success('Item added to Cart')
+    // } else {
+    //   alert.error('Item Already added')
+    // }
   }
   useEffect(() => {
     dispatch(fetchProductByIdAsync(params.id))
@@ -53,13 +92,22 @@ export default function ProductDetail() {
 
   return (
     <div className="bg-white">
+      {status === 'loading' ? (
+        <Grid
+          height="80"
+          width="80"
+          color="rgb(79, 70, 229) "
+          ariaLabel="grid-loading"
+          radius="12.5"
+          wrapperStyle={{}}
+          wrapperClass=""
+          visible={true}
+        />
+      ) : null}
       {product && (
         <div className="pt-6">
           <nav aria-label="Breadcrumb">
-            <ol
-              role="list"
-              className="mx-auto flex max-w-2xl items-center space-x-2 px-4 sm:px-6 lg:max-w-7xl lg:px-8"
-            >
+            <ol className="mx-auto flex max-w-2xl items-center space-x-2 px-4 sm:px-6 lg:max-w-7xl lg:px-8">
               {product.breadcrumbs &&
                 product.breadcrumbs.map((breadcrumb) => (
                   <li key={breadcrumb.id}>
@@ -140,8 +188,11 @@ export default function ProductDetail() {
             {/* Options */}
             <div className="mt-4 lg:row-span-3 lg:mt-0">
               <h2 className="sr-only">Product information</h2>
-              <p className="text-3xl tracking-tight text-gray-900">
+              <p className="text-xl line-through tracking-tight text-gray-900">
                 ${product[0].price}
+              </p>
+              <p className="text-3xl tracking-tight text-gray-900">
+                ${discountedPrice(product[0])}
               </p>
 
               {/* Reviews */}

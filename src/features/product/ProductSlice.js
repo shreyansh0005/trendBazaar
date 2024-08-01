@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
 import {
-  fetchAllProducts,
   fetchProductsByFilters,
   fetchBrands,
   fetchCategories,
@@ -19,15 +18,6 @@ const initialState = {
   selectedProduct: null,
 }
 
-export const fetchAllProductsAsync = createAsyncThunk(
-  'product/fetchAllProducts',
-  async () => {
-    const response = await fetchAllProducts()
-    // The value we return becomes the `fulfilled` action payload
-    return response.data
-  }
-)
-
 export const fetchProductByIdAsync = createAsyncThunk(
   'product/fetchProductById',
   async (id) => {
@@ -39,8 +29,13 @@ export const fetchProductByIdAsync = createAsyncThunk(
 
 export const fetchProductsByFilterAsync = createAsyncThunk(
   'product/fetchProductsByFilters',
-  async (filter, sort, pagination) => {
-    const response = await fetchProductsByFilters(filter, sort, pagination)
+  async ({ filter, sort, pagination, admin }) => {
+    const response = await fetchProductsByFilters(
+      filter,
+      sort,
+      pagination,
+      admin
+    )
     return response.data
   }
 )
@@ -89,13 +84,6 @@ export const productSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
-      .addCase(fetchAllProductsAsync.pending, (state) => {
-        state.status = 'loading'
-      })
-      .addCase(fetchAllProductsAsync.fulfilled, (state, action) => {
-        state.status = 'idle'
-        state.products = action.payload
-      })
 
       .addCase(fetchProductsByFilterAsync.pending, (state) => {
         state.status = 'loading'
@@ -145,6 +133,7 @@ export const productSlice = createSlice({
           (product) => product.id === action.payload.id
         )
         state.products[index] = action.payload
+        state.selectedProduct = action.payload
       })
   },
 })
@@ -160,5 +149,6 @@ export const selectCategories = (state) => state.product.categories
 export const selectTotalItems = (state) => state.product.totalItems
 
 export const selectProductById = (state) => state.product.selectedProduct
+export const selectProductListStatus = (state) => state.product.status
 
 export default productSlice.reducer

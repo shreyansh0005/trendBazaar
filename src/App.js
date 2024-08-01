@@ -19,7 +19,7 @@ import ProductDetailPage from './pages/ProductDetailPage'
 import Protected from './features/auth/components/Protected'
 import { useDispatch } from 'react-redux'
 import { useSelector } from 'react-redux'
-import { updateUserAsync } from './features/auth/authSlice'
+
 import { fetchItemsByUserIdAsync } from './features/cart/cartSlice'
 import PageNotFound from './pages/404'
 import OrderSuccessPage from './pages/OrderSuccessPage'
@@ -36,6 +36,14 @@ import ProtectedAdmin from './features/auth/components/ProtectedAdmin'
 import AdminHome from './pages/AdminHome'
 import AdminProductDetailPage from './pages/AdminProductDetailPage'
 import AdminProductFormPage from './pages/AdminProductFormPage'
+import AdminOrdersPage from './pages/AdminOrdersPage'
+import { positions, Provider } from 'react-alert'
+import AlertTemplate from 'react-alert-template-basic'
+
+const options = {
+  timeout: 5000,
+  position: positions.BOTTOM_LEFT,
+}
 const router = createBrowserRouter([
   {
     path: '/',
@@ -102,6 +110,14 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: '/admin/orders',
+    element: (
+      <ProtectedAdmin>
+        <AdminOrdersPage></AdminOrdersPage>
+      </ProtectedAdmin>
+    ),
+  },
+  {
     path: '/admin/product-form/edit/:id',
     element: (
       <ProtectedAdmin>
@@ -111,18 +127,27 @@ const router = createBrowserRouter([
   },
   {
     path: '/order-success/:id',
-    element: <OrderSuccessPage />,
+    element: (
+      <Protected>
+        <OrderSuccessPage></OrderSuccessPage>{' '}
+      </Protected>
+    ),
   },
   {
     path: '/orders',
     element: (
-      <UserOrdersPage></UserOrdersPage>
-      // we will add Page later right now using component directly.
+      <Protected>
+        <UserOrdersPage></UserOrdersPage>{' '}
+      </Protected>
     ),
   },
   {
     path: '/profile',
-    element: <UserProfilePage></UserProfilePage>,
+    element: (
+      <Protected>
+        <UserProfilePage></UserProfilePage>{' '}
+      </Protected>
+    ),
   },
   {
     path: '/logout',
@@ -150,7 +175,9 @@ function App() {
   return (
     <>
       <div className="App">
-        <RouterProvider router={router} />
+        <Provider template={AlertTemplate} {...options}>
+          <RouterProvider router={router} />
+        </Provider>
         {/* Link must be inside the Provider */}
       </div>
     </>
